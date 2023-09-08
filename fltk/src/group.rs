@@ -494,6 +494,16 @@ impl ColorChooser {
             }
         }
     }
+
+    /// Set the mode of the ColorChooser - color modes are rgb(0), byte(1), hex(2), or hsv(3) 
+    pub fn set_mode(&mut self, mode: i32) {
+        assert!(!self.was_deleted());
+        unsafe {
+            Fl_Color_Chooser_set_mode(
+                self.inner, mode
+            );
+        }
+    }
 }
 
 crate::macros::widget::impl_widget_type!(FlexType);

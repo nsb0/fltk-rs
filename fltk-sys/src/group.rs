@@ -2803,6 +2803,9 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
+    pub fn Fl_Color_Chooser_set_mode(self_: *mut Fl_Color_Chooser, newMode: ::std::os::raw::c_int);
+}
+extern "C" {
     pub fn Fl_Color_Chooser_begin(self_: *mut Fl_Color_Chooser);
 }
 extern "C" {
