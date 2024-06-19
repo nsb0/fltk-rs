@@ -377,28 +377,6 @@ pub fn copy2(stuff: &str) {
     }
 }
 
-/// Copy image to the clipboard
-pub fn copy_image(data: &[u8], w: usize, h: usize) {
-    // if data.len() != w * h * 3 {
-    //     panic!("Data length must be equal to w * h * 3");
-    // }
-    unsafe {
-        fl::Fl_open_display();
-        fl::Fl_copy_image(data.as_ptr() as _, w as _, h as _, 1);
-    }
-}
-
-/// Copy image to the selection buffer
-pub fn copy_image2(data: &[u8], w: usize, h: usize) {
-    // if data.len() != w * h * 3 {
-    //     panic!("Data length must be equal to w * h * 3");
-    // }
-    unsafe {
-        fl::Fl_open_display();
-        fl::Fl_copy_image(data.as_ptr() as _, w as _, h as _, 0);
-    }
-}
-
 /// Types of Clipboard contents
 #[derive(Debug, Clone, Copy)]
 pub enum ClipboardContent {
