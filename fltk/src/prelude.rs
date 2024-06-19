@@ -51,6 +51,8 @@ pub enum FltkErrorKind {
     PrintError,
     /// Invalid color
     InvalidColor,
+    /// Failed to set grid widget
+    FailedGridSetWidget,
 }
 
 impl std::error::Error for FltkError {
@@ -468,17 +470,11 @@ pub unsafe trait WidgetBase: WidgetExt {
     /// * `width` - The width of the widget
     /// * `heigth` - The height of the widget
     /// * `title` - The title or label of the widget
-    /// The title is expected to be a static str or None.
     /// To use dynamic strings use `with_label(self, &str)` or `set_label(&mut self, &str)`
     /// labels support special symbols preceded by an `@` [sign](https://www.fltk.org/doc-1.3/symbols.png).
     /// and for the [associated formatting](https://www.fltk.org/doc-1.3/common.html).
-    fn new<T: Into<Option<&'static str>>>(
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
-        title: T,
-    ) -> Self;
+    fn new<'a, T: Into<Option<&'a str>>>(x: i32, y: i32, width: i32, height: i32, title: T)
+        -> Self;
     /// Constructs a widget with the size of its parent
     fn default_fill() -> Self;
     /// Deletes widgets and their children.
@@ -543,6 +539,12 @@ pub unsafe trait WidgetBase: WidgetExt {
     #[doc(hidden)]
     /// Determine whether the base class's draw method is called last, default is true
     fn super_draw_first(&mut self, flag: bool) {
+        let _ = flag;
+    }
+    #[doc(hidden)]
+    /// Determine whether the base class's handle method should have an event propagated even
+    /// if handled by the instantiated widget
+    fn super_handle_first(&mut self, flag: bool) {
         let _ = flag;
     }
 }
@@ -711,7 +713,8 @@ pub unsafe trait WindowExt: GroupExt {
         Self: Sized;
     /// Makes a window modal, should be called before `show`
     fn make_modal(&mut self, val: bool);
-    /// Makes a window fullscreen
+    /// Makes a window fullscreen.
+    /// Requires that the window is resizable.
     fn fullscreen(&mut self, val: bool);
     /// Makes the window current
     fn make_current(&mut self);
@@ -870,6 +873,10 @@ pub unsafe trait InputExt: WidgetExt {
     /// # Errors
     /// Errors on failure to cut selection
     fn cut(&mut self) -> Result<(), FltkError>;
+    /// Return the cursor color
+    fn cursor_color(&self) -> Color;
+    /// Sets the cursor color
+    fn set_cursor_color(&mut self, color: Color);
     /// Return the text font
     fn text_font(&self) -> Font;
     /// Sets the text font
@@ -1029,10 +1036,14 @@ pub unsafe trait MenuExt: WidgetExt {
     fn menu(&self) -> Option<crate::menu::MenuItem>;
     /// Set the menu element
     /// # Safety
-    /// The MenuItem must be in a format recognized by FLTK (Null termination after submenus)
+    /// The MenuItem must be in a format recognized by FLTK (Empty CMenuItem after submenus and at the end of the menu)
     unsafe fn set_menu(&mut self, item: crate::menu::MenuItem);
     /// Get an item's pathname
     fn item_pathname(&self, item: Option<&crate::menu::MenuItem>) -> Result<String, FltkError>;
+    /// Set the menu's popup frame type
+    fn set_menu_frame(&mut self, f: FrameType);
+    /// Get the menu's popup frame type
+    fn menu_frame(&self) -> FrameType;
 }
 
 /// Defines the methods implemented by all valuator widgets
@@ -1088,9 +1099,13 @@ pub unsafe trait ValuatorExt: WidgetExt {
 /// to avoid future breakage if you try to implement them manually,
 /// use the Deref and DerefMut pattern or the `widget_extends!` macro
 pub unsafe trait DisplayExt: WidgetExt {
+    /// Check if the Display widget has an associated buffer
+    #[doc(hidden)]
+    fn has_buffer(&self) -> bool;
     /// Get the associated `TextBuffer`
     fn buffer(&self) -> Option<crate::text::TextBuffer>;
-    /// Sets the associated `TextBuffer`
+    /// Sets the associated `TextBuffer`.
+    /// Since the widget is long-lived, the lifetime of the buffer is prolonged to the lifetime of the program
     fn set_buffer<B: Into<Option<crate::text::TextBuffer>>>(&mut self, buffer: B);
     /// Get the associated style `TextBuffer`
     fn style_buffer(&self) -> Option<crate::text::TextBuffer>;
@@ -1280,6 +1295,9 @@ pub unsafe trait BrowserExt: WidgetExt {
     /// Select an item at the specified line.
     /// Lines start at 1
     fn select(&mut self, line: i32);
+    /// Select an item at the specified line.
+    /// Lines start at 1
+    fn deselect(&mut self, line: i32);
     /// Returns whether the item is selected
     /// Lines start at 1
     fn selected(&self, line: i32) -> bool;
@@ -1696,7 +1714,6 @@ macro_rules! widget_extends {
 
             /// Initialize with type
             pub fn with_type<T: $crate::prelude::WidgetType>(mut self, typ: T) -> Self {
-                assert!(!self.was_deleted());
                 self.set_type(typ);
                 self
             }
@@ -1707,8 +1724,6 @@ macro_rules! widget_extends {
                 wid: &W,
                 padding: i32,
             ) -> Self {
-                assert!(!wid.was_deleted());
-                assert!(!self.was_deleted());
                 let w = self.w();
                 let h = self.h();
                 debug_assert!(
@@ -1725,8 +1740,6 @@ macro_rules! widget_extends {
                 wid: &W,
                 padding: i32,
             ) -> Self {
-                assert!(!wid.was_deleted());
-                assert!(!self.was_deleted());
                 let w = self.w();
                 let h = self.h();
                 debug_assert!(
@@ -1743,8 +1756,6 @@ macro_rules! widget_extends {
                 wid: &W,
                 padding: i32,
             ) -> Self {
-                assert!(!wid.was_deleted());
-                assert!(!self.was_deleted());
                 let w = self.w();
                 let h = self.h();
                 debug_assert!(
@@ -1757,8 +1768,6 @@ macro_rules! widget_extends {
 
             /// Initialize left of another widget
             pub fn left_of<W: $crate::prelude::WidgetExt>(mut self, wid: &W, padding: i32) -> Self {
-                assert!(!wid.was_deleted());
-                assert!(!self.was_deleted());
                 let w = self.w();
                 let h = self.h();
                 debug_assert!(
@@ -1771,8 +1780,6 @@ macro_rules! widget_extends {
 
             /// Initialize center of another widget
             pub fn center_of<W: $crate::prelude::WidgetExt>(mut self, w: &W) -> Self {
-                assert!(!w.was_deleted());
-                assert!(!self.was_deleted());
                 debug_assert!(
                     w.width() != 0 && w.height() != 0,
                     "center_of requires the size of the widget to be known!"
@@ -1792,8 +1799,6 @@ macro_rules! widget_extends {
 
             /// Initialize center of another widget on the x axis
             pub fn center_x<W: $crate::prelude::WidgetExt>(mut self, w: &W) -> Self {
-                assert!(!w.was_deleted());
-                assert!(!self.was_deleted());
                 debug_assert!(
                     w.width() != 0 && w.height() != 0,
                     "center_of requires the size of the widget to be known!"
@@ -1811,8 +1816,6 @@ macro_rules! widget_extends {
 
             /// Initialize center of another widget on the y axis
             pub fn center_y<W: $crate::prelude::WidgetExt>(mut self, w: &W) -> Self {
-                assert!(!w.was_deleted());
-                assert!(!self.was_deleted());
                 debug_assert!(
                     w.width() != 0 && w.height() != 0,
                     "center_of requires the size of the widget to be known!"
@@ -1830,7 +1833,6 @@ macro_rules! widget_extends {
 
             /// Initialize center of parent
             pub fn center_of_parent(mut self) -> Self {
-                assert!(!self.was_deleted());
                 if let Some(w) = self.parent() {
                     debug_assert!(
                         w.width() != 0 && w.height() != 0,
@@ -1852,8 +1854,6 @@ macro_rules! widget_extends {
 
             /// Initialize to the size of another widget
             pub fn size_of<W: $crate::prelude::WidgetExt>(mut self, w: &W) -> Self {
-                assert!(!w.was_deleted());
-                assert!(!self.was_deleted());
                 debug_assert!(
                     w.width() != 0 && w.height() != 0,
                     "size_of requires the size of the widget to be known!"
@@ -1866,7 +1866,6 @@ macro_rules! widget_extends {
 
             /// Initialize to the size of the parent
             pub fn size_of_parent(mut self) -> Self {
-                assert!(!self.was_deleted());
                 if let Some(parent) = self.parent() {
                     let w = parent.width();
                     let h = parent.height();

@@ -1,3 +1,4 @@
+use crate::utils;
 use std::path::Path;
 use std::process::Command;
 
@@ -84,6 +85,10 @@ pub fn link(target_os: &str, target_triple: &str, out_dir: &Path) {
 
         match target_os {
             "macos" => {
+                let darwin_version: i32 = utils::get_taget_darwin_major_version().unwrap();
+                if darwin_version > 19 {
+                    println!("cargo:rustc-link-lib=framework=UniformTypeIdentifiers");
+                }
                 println!("cargo:rustc-link-lib=framework=Carbon");
                 println!("cargo:rustc-link-lib=framework=Cocoa");
                 println!("cargo:rustc-link-lib=framework=ApplicationServices");

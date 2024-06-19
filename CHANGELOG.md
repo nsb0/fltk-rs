@@ -1,6 +1,131 @@
 # Changelog
 
 
+# [1.4.31] - 2024-06-07
+- Add InputChoice::value_index().
+- Tweak the Terminal widget API, remove some redundant methods by @jgriffitts.
+- Update ttf-parser to 0.21.
+- Update FLTK submodule.
+
+# [1.4.30] - 2024-05-09
+- Pin fltk to fltk-sys version so that users targeting older versions of fltk don't get a newer version of fltk-sys automatically.
+- Use MACOSX_DEPLOYMENT_TARGET to determine CMAKE_SYSTEM_VERSION when crosscompiling from linux to macos.
+- Update MSRV to 1.64 since underlying deps require it.
+- Make fltk-sys no_std compatible.
+- Add extra check for MenuItem::do_callback.
+- Update FLTK submodule (fixes Fl_Tree issue, wayland IME and crosscompiling from linux to macos with sdk < 11).
+
+# [1.4.29] - 2024-04-24
+- Rename experimental Terminal::put_char* to plot_char*.
+- Add MenuItem::do_callback().
+- Update FLTK submodule.
+
+# [1.4.28] - 2024-04-05
+- Fix macos link error required for macos > 11.0 by @volitionsystems.
+
+# [1.4.27] - 2024-04-01
+- Document that WindowExt::fullscreen() requires that the window is resizable as per upstream.
+- Use data_w and data_h for the RgbImage::convert method.
+- Update FLTK submodule.
+
+# [1.4.26] - 2024-03-10
+- Add Tile::size_range_by_child() and size_range_by_index().
+- Add utils::type_name for debugging purposes.
+- Fix TreeItem draw_item_content with newed items.
+- Fix single-threaded builds and linux arm64 cross-compilation.
+- Update FLTK submodule.
+
+# [1.4.25] - 2024-02-21
+- Add NativeFileChooser::try_show().
+- Add NativeFileChooserAction enum.
+- Add Tile::move_intersection method.
+- Add Color contrast functions.
+- Add MenuExt::menu_box() and set_menu_box().
+- Add MenuItem::pulldown().
+- Update Terminal widget and track changes in fltk Fl_Terminal widget color handling and docs by @jgriffitts.
+- Update FLTK submodule.
+
+# [1.4.24] - 2024-01-31
+- Revert to initial implementation of Color::from_rgbi().
+- Add check to Color::to_rgb() for colors within FLTK's colormap.
+- Add support for raw-window-handle version 0.6.
+
+# [1.4.23] - 2024-01-29
+- Allow a widget's inner handler to execute first. Super::handle only executes if inner_handler returns false by @jgriffitts.
+- use OPTION_USE_THREADS=OFF with CFLTK_SINGLE_THREADED.
+- Update FLTK submodule.
+
+# [1.4.22] - 2024-01-15
+- Add more Fl_Terminal protected methods by @jgriffitts.
+- Add WidgetBase::super_handle_first.
+- Use WidgetBase::assume_derived() in handle() and draw() methods when appropriate.
+- Fix enum with unknown value in FileDialogOptions.
+- Update FLTK submodule.
+
+# [1.4.21] - 2023-12-30
+- Fix Widget_Derived::resize() timing.
+- Fix deletion of SharedImage which is handled by FLTK.
+- Update FLTK submodule.
+
+# [1.4.20] - 2023-12-16
+- Add several Terminal methods by @jgriffitts.
+- Add Terminal::selection_text().
+- Fix drawing artifact on wayland.
+- Disable system libdecor by default.
+- Add takes_events() check for windows on macos.
+- Remove memory leak associated with calls to into_raw() by @jgriffitts.
+Relax static lifetime on Widget::new's title param.
+- Update FLTK submodule.
+
+# [1.4.19] - 2023-12-03
+- Add group::experimental::Terminal widget by @jgriffitts.
+- Add some extra colors, helpful for the newly added Terminal widget.
+- Add GlutWindow::swap_interval and set_swap_interval.
+- Update fltk submodule.
+
+# [1.4.18] - 2023-11-17
+- Fix build with enable-glwindowf feature.
+
+# [1.4.17] - 2023-11-17
+- Add Window::maximize, un_maximize, and maximize_active.
+- Add Button::set_compact.
+- Add TextBuffer::replace check.
+- Update FLTK submodule.
+
+# [1.4.16] - 2023-11-03
+- Fix Column::default_fill() centering.
+- Schedule callback deletion.
+- cfltk: Update pkg-config .pc generation under wayland.
+- Update FLTK submodule.
+
+# [1.4.15] - 2023-10-21
+- Wrap newly added Grid widget under the group::experimental module (api might change depending on FLTK).
+- Update FLTK submodule.
+
+
+# [1.4.14] - 2023-10-08
+- Add InputExt::cursor_color() and set_cursor_color() by @thorio.
+- Add TextBuffer::redo() and TextEditor::redo().
+- Add TextBuffer::append2().
+- Add TextBuffer::set_bytes().
+- Load system icons on linux.
+- Increate StyleTableEntry enties accepted length.
+- Update FLTK submodule.
+
+# [1.4.13] - 2023-09-23
+- Fix building with single-threaded feature.
+- Add DisplayExt::has_buffer().
+- Handle submenu in MenuItem::size().
+- Add pkg-config feature which builds this crate against a system installed cfltk instance.
+- Update FLTK submodule.
+
+# [1.4.12] - 2023-09-09
+- Add app::prefs::Preferences.
+- Fix drop impl for non-parented widgets.
+- Allow FrameType to represent values above 56.
+- Enable feature doc_auto_cfg for docs.rs by @viruscamp.
+- Update FLTK submodule.
+
 # [1.4.11] - 2023-09-05
 - Add app::add_check, has_check and remove_check.
 - Saner management of WidgetTracker.

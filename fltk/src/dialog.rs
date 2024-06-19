@@ -55,33 +55,37 @@ crate::macros::widget::impl_widget_type!(FileDialogType);
 /// Alias for `NativeFileChooserType`
 pub type NativeFileChooserType = FileDialogType;
 
-/// Defines the File dialog options, which can be set using the `set_option()` method.
-#[repr(i32)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum FileDialogOptions {
-    /// No options
-    NoOptions = 0,
-    /// Confirm on save as
-    SaveAsConfirm = 1,
-    /// New folder option
-    NewFolder = 2,
-    /// Enable preview
-    Preview = 4,
-    /// Use extension filter
-    UseFilterExt = 8,
-}
-
-crate::macros::widget::impl_widget_type!(FileDialogOptions);
-
-/// Alias to `NativeFileChooserOptions`
-pub type NativeFileChooserOptions = FileDialogOptions;
-
-impl std::ops::BitOr<FileDialogOptions> for FileDialogOptions {
-    type Output = FileDialogOptions;
-    fn bitor(self, other: FileDialogOptions) -> Self::Output {
-        unsafe { std::mem::transmute(self as i32 | other as i32) }
+bitflags::bitflags! {
+    /// Defines the File dialog options, which can be set using the `set_option()` method.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    pub struct FileDialogOptions: i32 {
+        /// No options
+        const NoOptions = 0;
+        /// Confirm on save as
+        const SaveAsConfirm = 1;
+        /// New folder option
+        const NewFolder = 2;
+        /// Enable preview
+        const Preview = 4;
+        /// Use extension filter
+        const UseFilterExt = 8;
     }
 }
+
+/// Alias to `FileDialogOptions`
+pub type NativeFileChooserOptions = FileDialogOptions;
+
+/// Rusult of try_show
+#[derive(Debug, Copy, Clone)]
+pub enum FileDialogAction {
+    /// Cancelled operation
+    Cancelled,
+    /// User chose a file/dir
+    Success,
+}
+
+/// Alias to `FileDialogAction`
+pub type NativeFileChooserAction = FileDialogAction;
 
 impl FileDialog {
     /// Creates an new file dialog
@@ -99,7 +103,7 @@ impl FileDialog {
         unsafe {
             let cnt = Fl_Native_File_Chooser_count(self.inner);
             if cnt == 0 {
-                return PathBuf::from("");
+                return PathBuf::new();
             }
             let x = Fl_Native_File_Chooser_filenames(self.inner, 0);
             PathBuf::from(
@@ -163,6 +167,19 @@ impl FileDialog {
     }
 
     /// Shows the file dialog
+    pub fn try_show(&mut self) -> Result<FileDialogAction, FltkError> {
+        assert!(!self.inner.is_null());
+        unsafe {
+            match Fl_Native_File_Chooser_show(self.inner) {
+                0 => Ok(FileDialogAction::Success),
+                -1 => Err(FltkError::Unknown(self.error_message().unwrap())),
+                1 => Ok(FileDialogAction::Cancelled),
+                _ => unreachable!(),
+            }
+        }
+    }
+
+    /// Shows the file dialog
     pub fn show(&mut self) {
         assert!(!self.inner.is_null());
         unsafe {
@@ -173,7 +190,7 @@ impl FileDialog {
     /// Sets the option for the dialog
     pub fn set_option(&mut self, opt: FileDialogOptions) {
         assert!(!self.inner.is_null());
-        unsafe { Fl_Native_File_Chooser_set_option(self.inner, opt as i32) }
+        unsafe { Fl_Native_File_Chooser_set_option(self.inner, opt.bits()) }
     }
 
     /// Sets the type for the dialog

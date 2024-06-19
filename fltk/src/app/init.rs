@@ -44,7 +44,8 @@ static UI_THREAD: Lazy<std::thread::ThreadId> = Lazy::new(|| std::thread::curren
 pub(crate) fn register_images() {
     #[cfg(not(feature = "no-images"))]
     unsafe {
-        fltk_sys::image::Fl_register_images()
+        fltk_sys::image::Fl_register_images();
+        fltk_sys::fl::Fl_load_system_icons();
     }
 }
 
@@ -55,6 +56,7 @@ pub(crate) fn register_images() {
 pub fn init_all() {
     unsafe {
         fl::Fl_init_all();
+        #[cfg(not(feature = "single-threaded"))]
         if fl::Fl_lock() != 0 {
             panic!("fltk-rs requires threading support!");
         }

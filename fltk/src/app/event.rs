@@ -9,7 +9,6 @@ use std::{
     mem,
     os::raw,
     panic,
-    sync::Arc,
 };
 
 /// Alias Window ptr
@@ -161,7 +160,6 @@ pub fn event_state() -> Shortcut {
 
 /// Returns whether an event occurred within a widget
 pub fn event_inside_widget<Wid: WidgetExt>(wid: &Wid) -> bool {
-    assert!(!wid.was_deleted());
     let x = wid.x();
     let y = wid.y();
     let w = wid.width();
@@ -176,7 +174,7 @@ pub fn event_inside(x: i32, y: i32, w: i32, h: i32) -> bool {
 
 /**
     Gets the widget that is below the mouse cursor.
-    This returns an Option<impl WidgetExt> which can be specified in the function call
+    This returns an `Option<impl WidgetExt>` which can be specified in the function call
     ```rust,no_run
     use fltk::app;
     use fltk::widget;
@@ -185,7 +183,7 @@ pub fn event_inside(x: i32, y: i32, w: i32, h: i32) -> bool {
 */
 pub fn belowmouse<Wid: WidgetExt>() -> Option<impl WidgetExt> {
     unsafe {
-        let x = fl::Fl_belowmouse() as *mut fltk_sys::fl::Fl_Widget;
+        let x = fl::Fl_belowmouse();
         if x.is_null() {
             None
         } else {
@@ -237,9 +235,7 @@ pub fn event_clipboard_image() -> Option<crate::image::RgbImage> {
         if image.is_null() {
             None
         } else {
-            Some(crate::image::RgbImage {
-                inner: Arc::from(image as *mut fltk_sys::image::Fl_RGB_Image),
-            })
+            Some(crate::image::RgbImage::from_image_ptr(image as _))
         }
     }
 }
@@ -406,7 +402,6 @@ pub fn paste<T>(widget: &T)
 where
     T: WidgetExt,
 {
-    assert!(!widget.was_deleted());
     if clipboard_contains(ClipboardContent::Text) {
         paste_text(widget)
     } else if clipboard_contains(ClipboardContent::Image) {
@@ -421,7 +416,6 @@ pub fn paste_text<T>(widget: &T)
 where
     T: WidgetExt,
 {
-    assert!(!widget.was_deleted());
     unsafe {
         fl::Fl_paste_text(widget.as_widget_ptr() as *mut fltk_sys::fl::Fl_Widget, 1);
     }
@@ -432,7 +426,6 @@ pub fn paste_text2<T>(widget: &T)
 where
     T: WidgetExt,
 {
-    assert!(!widget.was_deleted());
     unsafe {
         fl::Fl_paste_text(widget.as_widget_ptr() as *mut fltk_sys::fl::Fl_Widget, 0);
     }
@@ -443,7 +436,6 @@ pub fn paste_image<T>(widget: &T)
 where
     T: WidgetExt,
 {
-    assert!(!widget.was_deleted());
     unsafe {
         fl::Fl_paste_image(widget.as_widget_ptr() as *mut fltk_sys::fl::Fl_Widget, 1);
     }
@@ -454,7 +446,6 @@ pub fn paste_image2<T>(widget: &T)
 where
     T: WidgetExt,
 {
-    assert!(!widget.was_deleted());
     unsafe {
         fl::Fl_paste_image(widget.as_widget_ptr() as *mut fltk_sys::fl::Fl_Widget, 0);
     }

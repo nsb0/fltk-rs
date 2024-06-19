@@ -25,10 +25,9 @@ macro_rules! impl_menu_ext {
                     flag: MenuFlag,
                     cb: F,
                 ) -> i32 {
-                    assert!(!self.was_deleted());
                     let temp = CString::safe_new(name);
                     unsafe {
-                        unsafe extern "C" fn shim(wid: *mut Fl_Widget, data: *mut std::os::raw::c_void) {
+                    unsafe extern "C" fn shim(wid: *mut Fl_Widget, data: *mut std::os::raw::c_void) {
                             let mut wid = $crate::widget::Widget::from_widget_ptr(wid as *mut _);
                             let a: *mut Box<dyn FnMut(&mut $crate::widget::Widget)> =
                                 data as *mut Box<dyn FnMut(&mut $crate::widget::Widget)>;
@@ -40,7 +39,7 @@ macro_rules! impl_menu_ext {
                         let data: *mut std::os::raw::c_void = a as *mut std::os::raw::c_void;
                         let callback: Fl_Callback = Some(shim);
                         [<$flname _add>](
-                            self.inner,
+                            self.inner.widget() as _,
                             temp.as_ptr(),
                             shortcut.bits() as i32,
                             callback,
@@ -58,7 +57,6 @@ macro_rules! impl_menu_ext {
                     flag: MenuFlag,
                     cb: F,
                 ) -> i32 {
-                    assert!(!self.was_deleted());
                     let idx = if idx < self.size() && idx >= 0 {
                         idx
                     } else {
@@ -70,7 +68,7 @@ macro_rules! impl_menu_ext {
                     };
                     let temp = CString::safe_new(name);
                     unsafe {
-                        unsafe extern "C" fn shim(wid: *mut Fl_Widget, data: *mut std::os::raw::c_void) {
+                    unsafe extern "C" fn shim(wid: *mut Fl_Widget, data: *mut std::os::raw::c_void) {
                             let mut wid = $crate::widget::Widget::from_widget_ptr(wid as *mut _);
                             let a: *mut Box<dyn FnMut(&mut $crate::widget::Widget)> =
                                 data as *mut Box<dyn FnMut(&mut $crate::widget::Widget)>;
@@ -82,7 +80,7 @@ macro_rules! impl_menu_ext {
                         let data: *mut std::os::raw::c_void = a as *mut std::os::raw::c_void;
                         let callback: Fl_Callback = Some(shim);
                         [<$flname _insert>](
-                            self.inner,
+                            self.inner.widget() as _,
                             idx as i32,
                             temp.as_ptr(),
                             shortcut.bits() as i32,
@@ -119,88 +117,76 @@ macro_rules! impl_menu_ext {
                 }
 
                 fn remove(&mut self, idx: i32) {
-                    assert!(!self.was_deleted());
                     assert!(self.size() != 0 && idx >= 0 && idx < self.size());
-                    unsafe { [<$flname _remove>](self.inner, idx as i32) }
+                    unsafe { [<$flname _remove>](self.inner.widget() as _, idx as i32) }
                 }
 
                 fn find_item(&self, name: &str) -> Option<MenuItem> {
-                    assert!(!self.was_deleted());
                     let name = CString::safe_new(name);
                     unsafe {
-                        let menu_item = [<$flname _get_item>](self.inner, name.as_ptr());
+                        let menu_item = [<$flname _get_item>](self.inner.widget() as _, name.as_ptr());
                         if menu_item.is_null() {
                             None
                         } else {
-                            Some(MenuItem {
-                                inner: menu_item,
-                                size: Fl_Menu_Item_children(menu_item),
-                            })
+                            Some(MenuItem::from_ptr(
+                                menu_item
+                            ))
                         }
                     }
                 }
 
                 fn set_item(&mut self, item: &MenuItem) -> bool {
                     unsafe {
-                        assert!(!self.was_deleted());
-                        [<$flname _set_item>](self.inner, item.inner) != 0
+                        [<$flname _set_item>](self.inner.widget() as _, item.as_ptr()) != 0
                     }
                 }
 
                 fn find_index(&self, label: &str) -> i32 {
-                    assert!(!self.was_deleted());
                     let label = CString::safe_new(label);
-                    unsafe { [<$flname _find_index>](self.inner, label.as_ptr()) as i32 }
+                    unsafe { [<$flname _find_index>](self.inner.widget() as _, label.as_ptr()) as i32 }
                 }
 
                 fn text_font(&self) -> $crate::enums::Font {
                     unsafe {
-                        assert!(!self.was_deleted());
-                        std::mem::transmute([<$flname _text_font>](self.inner))
+                        std::mem::transmute([<$flname _text_font>](self.inner.widget() as _))
                     }
                 }
 
                 fn set_text_font(&mut self, c: $crate::enums::Font) {
                     unsafe {
-                        assert!(!self.was_deleted());
-                        [<$flname _set_text_font>](self.inner, c.bits() as i32)
+                        [<$flname _set_text_font>](self.inner.widget() as _, c.bits() as i32)
                     }
                 }
 
                 fn text_size(&self) -> i32 {
                     unsafe {
-                        assert!(!self.was_deleted());
-                        [<$flname _text_size>](self.inner) as i32
+                        [<$flname _text_size>](self.inner.widget() as _) as i32
                     }
                 }
 
                 fn set_text_size(&mut self, c: i32) {
                     unsafe {
-                        assert!(!self.was_deleted());
-                        [<$flname _set_text_size>](self.inner, c as i32)
+                        [<$flname _set_text_size>](self.inner.widget() as _, c as i32)
                     }
                 }
 
                 fn text_color(&self) -> $crate::enums::Color {
                     unsafe {
-                        assert!(!self.was_deleted());
-                        std::mem::transmute([<$flname _text_color>](self.inner))
+                        std::mem::transmute([<$flname _text_color>](self.inner.widget() as _))
                     }
                 }
 
                 fn set_text_color(&mut self, c: $crate::enums::Color) {
                     unsafe {
-                        assert!(!self.was_deleted());
-                        [<$flname _set_text_color>](self.inner, c.bits() as u32)
+                        [<$flname _set_text_color>](self.inner.widget() as _, c.bits() as u32)
                     }
                 }
 
                 fn add_choice(&mut self, text: &str) -> i32 {
                     unsafe {
-                        assert!(!self.was_deleted());
                         let arg2 = CString::safe_new(text);
                         [<$flname _add_choice>](
-                            self.inner,
+                            self.inner.widget() as _,
                             arg2.as_ptr() as *mut std::os::raw::c_char,
                         )
                     }
@@ -208,8 +194,7 @@ macro_rules! impl_menu_ext {
 
                 fn choice(&self) -> Option<String> {
                     unsafe {
-                        assert!(!self.was_deleted());
-                        let choice_ptr = [<$flname _get_choice>](self.inner);
+                        let choice_ptr = [<$flname _get_choice>](self.inner.widget() as _);
                         if choice_ptr.is_null() {
                             None
                         } else {
@@ -224,29 +209,25 @@ macro_rules! impl_menu_ext {
 
                 fn value(&self) -> i32 {
                     unsafe {
-                        assert!(!self.was_deleted());
-                        [<$flname _value>](self.inner)
+                        [<$flname _value>](self.inner.widget() as _)
                     }
                 }
 
                 fn set_value(&mut self, v: i32) -> bool {
                     unsafe {
-                        assert!(!self.was_deleted());
-                        [<$flname _set_value>](self.inner, v) != 0
+                        [<$flname _set_value>](self.inner.widget() as _, v) != 0
                     }
                 }
 
                 fn clear(&mut self) {
                     unsafe {
-                        assert!(!self.was_deleted());
                         if $crate::app::grab().is_none() {
-                            [<$flname _clear>](self.inner);
+                            [<$flname _clear>](self.inner.widget() as _);
                         }
                     }
                 }
 
                 unsafe fn unsafe_clear(&mut self) {
-                    assert!(!self.was_deleted());
                     let sz = self.size();
                     if sz > 0 {
                         for i in 0..sz {
@@ -255,14 +236,13 @@ macro_rules! impl_menu_ext {
                             let _ = c.user_data();
                         }
                     }
-                    [<$flname _clear>](self.inner);
+                    [<$flname _clear>](self.inner.widget() as _);
                 }
 
                 fn clear_submenu(&mut self, idx: i32) -> Result<(), FltkError> {
                     unsafe {
-                        assert!(!self.was_deleted());
                         assert!(self.size() != 0 && idx >= 0 && idx < self.size());
-                        match [<$flname _clear_submenu>](self.inner, idx as i32) {
+                        match [<$flname _clear_submenu>](self.inner.widget() as _, idx as i32) {
                             0 => Ok(()),
                             _ => Err(FltkError::Internal(FltkErrorKind::FailedOperation)),
                         }
@@ -270,7 +250,6 @@ macro_rules! impl_menu_ext {
                 }
 
                 unsafe fn unsafe_clear_submenu(&mut self, idx: i32) -> Result<(), FltkError> {
-                    assert!(!self.was_deleted());
                     let x = self.at(idx);
                     if x.is_none() {
                         return Err(FltkError::Internal(FltkErrorKind::FailedOperation));
@@ -290,22 +269,20 @@ macro_rules! impl_menu_ext {
                         let _ = item.user_data();
                         i += 1;
                     }
-                    match [<$flname _clear_submenu>](self.inner, idx as i32) {
+                    match [<$flname _clear_submenu>](self.inner.widget() as _, idx as i32) {
                         0 => Ok(()),
                         _ => Err(FltkError::Internal(FltkErrorKind::FailedOperation)),
                     }
                 }
 
                 fn size(&self) -> i32 {
-                    assert!(!self.was_deleted());
-                    unsafe { [<$flname _size>](self.inner) as i32 }
+                    unsafe { [<$flname _size>](self.inner.widget() as _) as i32 }
                 }
 
                 fn text(&self, idx: i32) -> Option<String> {
-                    assert!(!self.was_deleted());
                     assert!(self.size() != 0 && idx >= 0 && idx < self.size());
                     unsafe {
-                        let text = [<$flname _text>](self.inner, idx as i32);
+                        let text = [<$flname _text>](self.inner.widget() as _, idx as i32);
                         if text.is_null() {
                             None
                         } else {
@@ -319,32 +296,26 @@ macro_rules! impl_menu_ext {
                 }
 
                 fn at(&self, idx: i32) -> Option<$crate::menu::MenuItem> {
-                    assert!(!self.was_deleted());
                     assert!(self.size() != 0 && idx >= 0 && idx < self.size());
                     unsafe {
                         let ptr =
-                            [<$flname _at>](self.inner, idx as i32) as *mut Fl_Menu_Item;
+                            [<$flname _at>](self.inner.widget() as _, idx as i32) as *mut Fl_Menu_Item;
                         if ptr.is_null() {
                             None
                         } else {
-                            Some(MenuItem {
-                                inner: ptr,
-                                size: Fl_Menu_Item_children(ptr),
-                            })
+                            Some(MenuItem::from_ptr(ptr))
                         }
                     }
                 }
 
                 fn mode(&self, idx: i32) -> $crate::menu::MenuFlag {
-                    assert!(!self.was_deleted());
                     assert!(self.size() != 0 && idx >= 0 && idx < self.size());
-                    unsafe { std::mem::transmute([<$flname _mode>](self.inner, idx as i32)) }
+                    unsafe { std::mem::transmute([<$flname _mode>](self.inner.widget() as _, idx as i32)) }
                 }
 
                 fn set_mode(&mut self, idx: i32, flag: $crate::menu::MenuFlag) {
-                    assert!(!self.was_deleted());
                     assert!(self.size() != 0 && idx >= 0 && idx < self.size());
-                    unsafe { [<$flname _set_mode>](self.inner, idx as i32, flag.bits()) }
+                    unsafe { [<$flname _set_mode>](self.inner.widget() as _, idx as i32, flag.bits()) }
                 }
 
                 fn end(&mut self) {
@@ -352,50 +323,41 @@ macro_rules! impl_menu_ext {
                 }
 
                 fn set_down_frame(&mut self, f: $crate::enums::FrameType) {
-                    assert!(!self.was_deleted());
-                    unsafe { [<$flname _set_down_box>](self.inner, f.as_i32()) }
+                    unsafe { [<$flname _set_down_box>](self.inner.widget() as _, f.as_i32()) }
                 }
 
                 fn down_frame(&self) -> $crate::enums::FrameType {
-                    assert!(!self.was_deleted());
-                    unsafe { $crate::enums::FrameType::from_i32([<$flname _down_box>](self.inner)) }
+                    unsafe { $crate::enums::FrameType::from_i32([<$flname _down_box>](self.inner.widget() as _)) }
                 }
 
                 fn global(&mut self) {
-                    assert!(!self.was_deleted());
-                    unsafe { [<$flname _global>](self.inner) }
+                    unsafe { [<$flname _global>](self.inner.widget() as _) }
                 }
 
                 fn menu(&self) -> Option<$crate::menu::MenuItem> {
-                    assert!(!self.was_deleted());
                     unsafe {
-                        let ptr = [<$flname _menu>](self.inner);
+                        let ptr = [<$flname _menu>](self.inner.widget() as _);
                         if ptr.is_null() {
                             None
                         } else {
-                            Some(MenuItem {
-                                inner: ptr as _,
-                                size: Fl_Menu_Item_children(ptr),
-                            })
+                            Some(MenuItem::from_ptr(ptr as _))
                         }
                     }
                 }
 
                 unsafe fn set_menu(&mut self, item: $crate::menu::MenuItem) {
-                    assert!(!self.was_deleted());
-                    [<$flname _set_menu>](self.inner, item.inner)
+                    [<$flname _set_menu>](self.inner.widget() as _, item.as_ptr())
                 }
 
                 fn item_pathname(&self, item: Option<&$crate::menu::MenuItem>) -> Result<String, FltkError> {
-                    assert!(!self.was_deleted());
                     let item = if let Some(item) = item {
-                        item.inner
+                    unsafe { item.as_ptr() }
                     } else {
                         std::ptr::null_mut()
                     };
                     let mut temp = vec![0u8; 256];
                     unsafe {
-                        let ret = [<$flname _item_pathname>](self.inner, temp.as_mut_ptr() as _, 256, item);
+                        let ret = [<$flname _item_pathname>](self.inner.widget() as _, temp.as_mut_ptr() as _, 256, item);
                         if ret == 0 {
                             if let Some(pos) = temp.iter().position(|x| *x == 0) {
                                 temp = temp.split_at(pos).0.to_vec();
@@ -405,6 +367,14 @@ macro_rules! impl_menu_ext {
                             Err(FltkError::Internal(FltkErrorKind::FailedOperation))
                         }
                     }
+                }
+
+                fn set_menu_frame(&mut self, f: $crate::enums::FrameType) {
+                    unsafe { [<$flname _set_menu_box>](self.inner.widget() as _, f.as_i32()) }
+                }
+
+                fn menu_frame(&self) -> $crate::enums::FrameType {
+                    unsafe { $crate::enums::FrameType::from_i32([<$flname _menu_box>](self.inner.widget() as _)) }
                 }
             }
         }

@@ -8,9 +8,9 @@ pub fn has_program(prog: &str) -> bool {
     }
 }
 
-pub fn fltk_config_version() -> String {
-    let out = match std::process::Command::new("fltk-config")
-        .arg("--api-version")
+pub fn proc_output(args: &[&str]) -> String {
+    let out = match std::process::Command::new(args[0])
+        .args(&args[1..])
         .output()
     {
         Ok(out) => out.stdout,
@@ -21,4 +21,31 @@ pub fn fltk_config_version() -> String {
 
 pub fn use_static_msvcrt() -> bool {
     cfg!(target_feature = "crt-static") || cfg!(feature = "static-msvcrt")
+}
+
+pub fn get_taget_darwin_major_version() -> Option<i32> {
+    let env = std::env::var("MACOSX_DEPLOYMENT_TARGET");
+    let target = std::env::var("TARGET").unwrap();
+    let host = std::env::var("HOST").unwrap();
+    if let Ok(env) = env {
+        let val: i32 = env
+            .trim()
+            .split('.')
+            .next()
+            .expect("Couldn't get macos version!")
+            .parse()
+            .expect("Counldn't get macos version!");
+        Some(val + 9)
+    } else if target.contains("darwin") && host.contains("darwin") {
+        let val = proc_output(&["uname", "-r"])
+            .trim()
+            .split('.')
+            .next()
+            .expect("Couldn't get macos version!")
+            .parse()
+            .expect("Counldn't get macos version!");
+        Some(val)
+    } else {
+        Some(19)
+    }
 }

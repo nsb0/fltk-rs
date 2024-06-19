@@ -24,6 +24,8 @@ use fltk_sys::window::*;
 use raw_window_handle::*;
 #[cfg(feature = "rwh05")]
 use rwh05::*;
+#[cfg(feature = "rwh06")]
+use rwh06::*;
 use std::{
     ffi::{CStr, CString},
     mem,
@@ -107,8 +109,7 @@ crate::macros::widget::impl_widget_type!(WindowType);
 /// Creates a single (buffered) window widget
 #[derive(Debug)]
 pub struct SingleWindow {
-    inner: *mut Fl_Single_Window,
-    tracker: crate::widget::WidgetTracker,
+    inner: crate::widget::WidgetTracker,
     is_derived: bool,
 }
 
@@ -161,7 +162,6 @@ impl SingleWindow {
     /// - `-ti[tle] windowtitle`
     /// - `-to[oltips]`
     pub fn show_with_env_args(&mut self) {
-        assert!(!self.was_deleted());
         unsafe {
             let args: Vec<String> = std::env::args().collect();
             let len = args.len() as i32;
@@ -171,7 +171,7 @@ impl SingleWindow {
                 v.push(c.into_raw() as *mut raw::c_char);
             }
             let mut v = mem::ManuallyDrop::new(v);
-            Fl_Window_show_with_args(self.inner as *mut Fl_Window, len, v.as_mut_ptr())
+            Fl_Window_show_with_args(self.inner.widget() as *mut Fl_Window, len, v.as_mut_ptr())
         }
     }
 
@@ -194,7 +194,6 @@ impl SingleWindow {
     /// - `-ti[tle] windowtitle`
     /// - `-to[oltips]`
     pub fn show_with_args(&mut self, args: &[&str]) {
-        assert!(!self.was_deleted());
         unsafe {
             let mut temp = vec![""];
             temp.extend(args);
@@ -205,13 +204,12 @@ impl SingleWindow {
                 v.push(c.into_raw() as *mut raw::c_char);
             }
             let mut v = mem::ManuallyDrop::new(v);
-            Fl_Window_show_with_args(self.inner as *mut Fl_Window, len, v.as_mut_ptr())
+            Fl_Window_show_with_args(self.inner.widget() as *mut Fl_Window, len, v.as_mut_ptr())
         }
     }
 
     /// Returns the pixels per unit/point
     pub fn pixels_per_unit(&self) -> f32 {
-        assert!(!self.was_deleted());
         #[allow(unused_mut)]
         let mut factor = 1.0;
         #[cfg(target_os = "macos")]
@@ -269,13 +267,27 @@ impl SingleWindow {
             }
         }
     }
+
+    /// Maximize the window
+    pub fn maximize(&mut self) {
+        unsafe { Fl_Window_maximize(self.inner.widget() as _) }
+    }
+
+    /// Unmaximize the window
+    pub fn un_maximize(&mut self) {
+        unsafe { Fl_Window_un_maximize(self.inner.widget() as _) }
+    }
+
+    /// Checks whether the window is maximized
+    pub fn maximize_active(&self) -> bool {
+        unsafe { Fl_Window_maximize_active(self.inner.widget() as _) != 0 }
+    }
 }
 
 /// Creates a double (buffered) window widget
 #[derive(Debug)]
 pub struct DoubleWindow {
-    inner: *mut Fl_Double_Window,
-    tracker: crate::widget::WidgetTracker,
+    inner: crate::widget::WidgetTracker,
     is_derived: bool,
 }
 
@@ -328,7 +340,6 @@ impl DoubleWindow {
     /// - `-ti[tle] windowtitle`
     /// - `-to[oltips]`
     pub fn show_with_env_args(&mut self) {
-        assert!(!self.was_deleted());
         unsafe {
             let args: Vec<String> = std::env::args().collect();
             let len = args.len() as i32;
@@ -338,7 +349,7 @@ impl DoubleWindow {
                 v.push(c.into_raw() as *mut raw::c_char);
             }
             let mut v = mem::ManuallyDrop::new(v);
-            Fl_Window_show_with_args(self.inner as *mut Fl_Window, len, v.as_mut_ptr())
+            Fl_Window_show_with_args(self.inner.widget() as *mut Fl_Window, len, v.as_mut_ptr())
         }
     }
 
@@ -361,7 +372,6 @@ impl DoubleWindow {
     /// - `-ti[tle] windowtitle`
     /// - `-to[oltips]`
     pub fn show_with_args(&mut self, args: &[&str]) {
-        assert!(!self.was_deleted());
         unsafe {
             let mut temp = vec![""];
             temp.extend(args);
@@ -372,19 +382,17 @@ impl DoubleWindow {
                 v.push(c.into_raw() as *mut raw::c_char);
             }
             let mut v = mem::ManuallyDrop::new(v);
-            Fl_Window_show_with_args(self.inner as *mut Fl_Window, len, v.as_mut_ptr())
+            Fl_Window_show_with_args(self.inner.widget() as *mut Fl_Window, len, v.as_mut_ptr())
         }
     }
 
     /// Forces the window to be drawn, this window is also made current and calls draw()
     pub fn flush(&mut self) {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Double_Window_flush(self.inner) }
+        unsafe { Fl_Double_Window_flush(self.inner.widget() as _) }
     }
 
     /// Returns the pixels per unit./point
     pub fn pixels_per_unit(&self) -> f32 {
-        assert!(!self.was_deleted());
         #[allow(unused_mut)]
         let mut factor = 1.0;
         #[cfg(target_os = "macos")]
@@ -445,7 +453,7 @@ impl DoubleWindow {
             }
             #[cfg(feature = "use-wayland")]
             {
-                Fl_Double_Window_show(self.inner);
+                Fl_Double_Window_show(self.inner.widget() as _);
             }
         }
     }
@@ -526,13 +534,27 @@ impl DoubleWindow {
             cfltk_setOnTop(self.raw_handle());
         }
     }
+
+    /// Maximize the window
+    pub fn maximize(&mut self) {
+        unsafe { Fl_Window_maximize(self.inner.widget() as _) }
+    }
+
+    /// Unmaximize the window
+    pub fn un_maximize(&mut self) {
+        unsafe { Fl_Window_un_maximize(self.inner.widget() as _) }
+    }
+
+    /// Checks whether the window is maximized
+    pub fn maximize_active(&self) -> bool {
+        unsafe { Fl_Window_maximize_active(self.inner.widget() as _) != 0 }
+    }
 }
 
 /// Creates a Menu window widget
 #[derive(Debug)]
 pub struct MenuWindow {
-    inner: *mut Fl_Menu_Window,
-    tracker: crate::widget::WidgetTracker,
+    inner: crate::widget::WidgetTracker,
     is_derived: bool,
 }
 
@@ -553,8 +575,7 @@ impl Default for MenuWindow {
 /// Creates an overlay (buffered) window widget
 #[derive(Debug)]
 pub struct OverlayWindow {
-    inner: *mut Fl_Overlay_Window,
-    tracker: crate::widget::WidgetTracker,
+    inner: crate::widget::WidgetTracker,
     is_derived: bool,
 }
 
@@ -607,7 +628,6 @@ impl OverlayWindow {
     /// - `-ti[tle] windowtitle`
     /// - `-to[oltips]`
     pub fn show_with_env_args(&mut self) {
-        assert!(!self.was_deleted());
         unsafe {
             let args: Vec<String> = std::env::args().collect();
             let len = args.len() as i32;
@@ -617,7 +637,7 @@ impl OverlayWindow {
                 v.push(c.into_raw() as *mut raw::c_char);
             }
             let mut v = mem::ManuallyDrop::new(v);
-            Fl_Window_show_with_args(self.inner as *mut Fl_Window, len, v.as_mut_ptr())
+            Fl_Window_show_with_args(self.inner.widget() as *mut Fl_Window, len, v.as_mut_ptr())
         }
     }
 
@@ -640,7 +660,6 @@ impl OverlayWindow {
     /// - `-ti[tle] windowtitle`
     /// - `-to[oltips]`
     pub fn show_with_args(&mut self, args: &[&str]) {
-        assert!(!self.was_deleted());
         unsafe {
             let mut temp = vec![""];
             temp.extend(args);
@@ -651,23 +670,22 @@ impl OverlayWindow {
                 v.push(c.into_raw() as *mut raw::c_char);
             }
             let mut v = mem::ManuallyDrop::new(v);
-            Fl_Window_show_with_args(self.inner as *mut Fl_Window, len, v.as_mut_ptr())
+            Fl_Window_show_with_args(self.inner.widget() as *mut Fl_Window, len, v.as_mut_ptr())
         }
     }
 
     /// Forces the window to be drawn, this window is also made current and calls draw()
     pub fn flush(&mut self) {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Double_Window_flush(self.inner as _) }
+        unsafe { Fl_Double_Window_flush(self.inner.widget() as _) }
     }
 
     /// Draw overlay
     pub fn draw_overlay<F: FnMut(&mut Self) + 'static>(&mut self, cb: F) {
-        assert!(!self.was_deleted());
         assert!(self.is_derived);
         unsafe {
             unsafe extern "C" fn shim(wid: *mut Fl_Widget, data: *mut raw::c_void) {
                 let mut wid = OverlayWindow::from_widget_ptr(wid as *mut _);
+                wid.assume_derived();
                 let a: *mut Box<dyn FnMut(&mut OverlayWindow)> =
                     data as *mut Box<dyn FnMut(&mut OverlayWindow)>;
                 let f: &mut (dyn FnMut(&mut OverlayWindow)) = &mut **a;
@@ -680,20 +698,18 @@ impl OverlayWindow {
             let a: *mut Box<dyn FnMut(&mut Self)> = Box::into_raw(Box::new(Box::new(cb)));
             let data: *mut raw::c_void = a as *mut raw::c_void;
             let callback: custom_draw_callback = Some(shim);
-            Fl_Overlay_Window_draw_overlay(self.inner, callback, data);
+            Fl_Overlay_Window_draw_overlay(self.inner.widget() as _, callback, data);
         }
     }
 
     /// Redraw overlay
     pub fn redraw_overlay(&self) {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Overlay_Window_redraw_overlay(self.inner) }
+        unsafe { Fl_Overlay_Window_redraw_overlay(self.inner.widget() as _) }
     }
 
     /// Returns whether the overlay window can do hardware backed overlay
     pub fn can_do_overlay(&self) -> bool {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Overlay_Window_can_do_overlay(self.inner) != 0 }
+        unsafe { Fl_Overlay_Window_can_do_overlay(self.inner.widget() as _) != 0 }
     }
 }
 
@@ -704,8 +720,7 @@ pub type GlContext = *mut raw::c_void;
 #[cfg(feature = "enable-glwindow")]
 #[derive(Debug)]
 pub struct GlutWindow {
-    inner: *mut Fl_Glut_Window,
-    tracker: crate::widget::WidgetTracker,
+    inner: crate::widget::WidgetTracker,
     is_derived: bool,
 }
 
@@ -740,45 +755,41 @@ impl GlutWindow {
         if !ret.is_null() {
             ret as *const _
         } else {
-            unsafe { Fl_Glut_Window_get_proc_address(self.inner, s.as_ptr()) as *const _ }
+            unsafe {
+                Fl_Glut_Window_get_proc_address(self.inner.widget() as _, s.as_ptr()) as *const _
+            }
         }
     }
 
     /// Forces the window to be drawn, this window is also made current and calls draw()
     pub fn flush(&mut self) {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_flush(self.inner) }
+        unsafe { Fl_Glut_Window_flush(self.inner.widget() as _) }
     }
 
     /// Returns whether the OpeGL context is still valid
     pub fn valid(&self) -> bool {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_valid(self.inner) != 0 }
+        unsafe { Fl_Glut_Window_valid(self.inner.widget() as _) != 0 }
     }
 
     /// Mark the OpeGL context as still valid
     pub fn set_valid(&mut self, v: bool) {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_set_valid(self.inner, v as raw::c_char) }
+        unsafe { Fl_Glut_Window_set_valid(self.inner.widget() as _, v as raw::c_char) }
     }
 
     /// Returns whether the context is valid upon creation
     pub fn context_valid(&self) -> bool {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_context_valid(self.inner) != 0 }
+        unsafe { Fl_Glut_Window_context_valid(self.inner.widget() as _) != 0 }
     }
 
     /// Mark the context as valid upon creation
     pub fn set_context_valid(&mut self, v: bool) {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_set_context_valid(self.inner, v as raw::c_char) }
+        unsafe { Fl_Glut_Window_set_context_valid(self.inner.widget() as _, v as raw::c_char) }
     }
 
     /// Returns the GlContext
     pub fn context(&self) -> Option<GlContext> {
-        assert!(!self.was_deleted());
         unsafe {
-            let ctx = Fl_Glut_Window_context(self.inner);
+            let ctx = Fl_Glut_Window_context(self.inner.widget() as _);
             if ctx.is_null() {
                 None
             } else {
@@ -789,77 +800,75 @@ impl GlutWindow {
 
     /// Sets the GlContext
     pub fn set_context(&mut self, ctx: GlContext, destroy_flag: bool) {
-        assert!(!self.was_deleted());
         assert!(!ctx.is_null());
-        unsafe { Fl_Glut_Window_set_context(self.inner, ctx, destroy_flag as i32) }
+        unsafe { Fl_Glut_Window_set_context(self.inner.widget() as _, ctx, destroy_flag as i32) }
     }
 
     /// Swaps the back and front buffers
     pub fn swap_buffers(&mut self) {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_swap_buffers(self.inner) }
+        unsafe { Fl_Glut_Window_swap_buffers(self.inner.widget() as _) }
+    }
+
+    /// Gets the swap interval
+    pub fn swap_interval(&self) -> i32 {
+        unsafe { Fl_Glut_Window_swap_interval(self.inner.widget() as _) }
+    }
+
+    /// Sets the swap interval
+    pub fn set_swap_interval(&mut self, frames: i32) {
+        unsafe { Fl_Glut_Window_set_swap_interval(self.inner.widget() as _, frames) }
     }
 
     /// Sets the projection so 0,0 is in the lower left of the window
     /// and each pixel is 1 unit wide/tall.
     pub fn ortho(&mut self) {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_ortho(self.inner) }
+        unsafe { Fl_Glut_Window_ortho(self.inner.widget() as _) }
     }
 
     /// Returns whether the GlutWindow can do overlay
     pub fn can_do_overlay(&self) -> bool {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_can_do_overlay(self.inner) != 0 }
+        unsafe { Fl_Glut_Window_can_do_overlay(self.inner.widget() as _) != 0 }
     }
 
     /// Redraws the overlay
     pub fn redraw_overlay(&mut self) {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_redraw_overlay(self.inner) }
+        unsafe { Fl_Glut_Window_redraw_overlay(self.inner.widget() as _) }
     }
 
     /// Hides the overlay
     pub fn hide_overlay(&mut self) {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_hide_overlay(self.inner) }
+        unsafe { Fl_Glut_Window_hide_overlay(self.inner.widget() as _) }
     }
 
     /// Makes the overlay current
     pub fn make_overlay_current(&mut self) {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_make_overlay_current(self.inner) }
+        unsafe { Fl_Glut_Window_make_overlay_current(self.inner.widget() as _) }
     }
 
     /// Returns the pixels per unit/point
     pub fn pixels_per_unit(&self) -> f32 {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_pixels_per_unit(self.inner) }
+        unsafe { Fl_Glut_Window_pixels_per_unit(self.inner.widget() as _) }
     }
 
     /// Gets the window's width in pixels
     pub fn pixel_w(&self) -> i32 {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_pixel_w(self.inner) }
+        unsafe { Fl_Glut_Window_pixel_w(self.inner.widget() as _) }
     }
 
     /// Gets the window's height in pixels
     pub fn pixel_h(&self) -> i32 {
-        assert!(!self.was_deleted());
-        unsafe { Fl_Glut_Window_pixel_h(self.inner) }
+        unsafe { Fl_Glut_Window_pixel_h(self.inner.widget() as _) }
     }
 
     /// Get the Mode of the GlutWindow
     pub fn mode(&self) -> Mode {
-        assert!(!self.was_deleted());
-        unsafe { mem::transmute(Fl_Glut_Window_mode(self.inner)) }
+        unsafe { mem::transmute(Fl_Glut_Window_mode(self.inner.widget() as _)) }
     }
 
     /// Set the Mode of the GlutWindow
     pub fn set_mode(&mut self, mode: Mode) {
-        assert!(!self.was_deleted());
         unsafe {
-            Fl_Glut_Window_set_mode(self.inner, mode.bits());
+            Fl_Glut_Window_set_mode(self.inner.widget() as _, mode.bits());
         }
     }
 }
@@ -877,8 +886,7 @@ pub mod experimental {
     #[cfg(feature = "enable-glwindow")]
     #[derive(Debug)]
     pub struct GlWidgetWindow {
-        inner: *mut Fl_Gl_Window,
-        tracker: crate::widget::WidgetTracker,
+        inner: crate::widget::WidgetTracker,
         is_derived: bool,
     }
 
@@ -929,45 +937,41 @@ pub mod experimental {
             if !ret.is_null() {
                 ret as *const _
             } else {
-                unsafe { Fl_Gl_Window_get_proc_address(self.inner, s.as_ptr()) as *const _ }
+                unsafe {
+                    Fl_Gl_Window_get_proc_address(self.inner.widget() as _, s.as_ptr()) as *const _
+                }
             }
         }
 
         /// Forces the window to be drawn, this window is also made current and calls draw()
         pub fn flush(&mut self) {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_flush(self.inner) }
+            unsafe { Fl_Gl_Window_flush(self.inner.widget() as _) }
         }
 
         /// Returns whether the OpeGL context is still valid
         pub fn valid(&self) -> bool {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_valid(self.inner) != 0 }
+            unsafe { Fl_Gl_Window_valid(self.inner.widget() as _) != 0 }
         }
 
         /// Mark the OpeGL context as still valid
         pub fn set_valid(&mut self, v: bool) {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_set_valid(self.inner, v as raw::c_char) }
+            unsafe { Fl_Gl_Window_set_valid(self.inner.widget() as _, v as raw::c_char) }
         }
 
         /// Returns whether the context is valid upon creation
         pub fn context_valid(&self) -> bool {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_context_valid(self.inner) != 0 }
+            unsafe { Fl_Gl_Window_context_valid(self.inner.widget() as _) != 0 }
         }
 
         /// Mark the context as valid upon creation
         pub fn set_context_valid(&mut self, v: bool) {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_set_context_valid(self.inner, v as raw::c_char) }
+            unsafe { Fl_Gl_Window_set_context_valid(self.inner.widget() as _, v as raw::c_char) }
         }
 
         /// Returns the GlContext
         pub fn context(&self) -> Option<GlContext> {
-            assert!(!self.was_deleted());
             unsafe {
-                let ctx = Fl_Gl_Window_context(self.inner);
+                let ctx = Fl_Gl_Window_context(self.inner.widget() as _);
                 if ctx.is_null() {
                     None
                 } else {
@@ -978,77 +982,75 @@ pub mod experimental {
 
         /// Sets the GlContext
         pub fn set_context(&mut self, ctx: GlContext, destroy_flag: bool) {
-            assert!(!self.was_deleted());
             assert!(!ctx.is_null());
-            unsafe { Fl_Gl_Window_set_context(self.inner, ctx, destroy_flag as i32) }
+            unsafe { Fl_Gl_Window_set_context(self.inner.widget() as _, ctx, destroy_flag as i32) }
         }
 
         /// Swaps the back and front buffers
         pub fn swap_buffers(&mut self) {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_swap_buffers(self.inner) }
+            unsafe { Fl_Gl_Window_swap_buffers(self.inner.widget() as _) }
+        }
+
+        /// Gets the swap interval
+        pub fn swap_interval(&self) -> i32 {
+            unsafe { Fl_Gl_Window_swap_interval(self.inner.widget() as _) }
+        }
+
+        /// Sets the swap interval
+        pub fn set_swap_interval(&mut self, frames: i32) {
+            unsafe { Fl_Gl_Window_set_swap_interval(self.inner.widget() as _, frames) }
         }
 
         /// Sets the projection so 0,0 is in the lower left of the window
         /// and each pixel is 1 unit wide/tall.
         pub fn ortho(&mut self) {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_ortho(self.inner) }
+            unsafe { Fl_Gl_Window_ortho(self.inner.widget() as _) }
         }
 
         /// Returns whether the GlutWindow can do overlay
         pub fn can_do_overlay(&self) -> bool {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_can_do_overlay(self.inner) != 0 }
+            unsafe { Fl_Gl_Window_can_do_overlay(self.inner.widget() as _) != 0 }
         }
 
         /// Redraws the overlay
         pub fn redraw_overlay(&mut self) {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_redraw_overlay(self.inner) }
+            unsafe { Fl_Gl_Window_redraw_overlay(self.inner.widget() as _) }
         }
 
         /// Hides the overlay
         pub fn hide_overlay(&mut self) {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_hide_overlay(self.inner) }
+            unsafe { Fl_Gl_Window_hide_overlay(self.inner.widget() as _) }
         }
 
         /// Makes the overlay current
         pub fn make_overlay_current(&mut self) {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_make_overlay_current(self.inner) }
+            unsafe { Fl_Gl_Window_make_overlay_current(self.inner.widget() as _) }
         }
 
         /// Returns the pixels per unit/point
         pub fn pixels_per_unit(&self) -> f32 {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_pixels_per_unit(self.inner) }
+            unsafe { Fl_Gl_Window_pixels_per_unit(self.inner.widget() as _) }
         }
 
         /// Gets the window's width in pixels
         pub fn pixel_w(&self) -> i32 {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_pixel_w(self.inner) }
+            unsafe { Fl_Gl_Window_pixel_w(self.inner.widget() as _) }
         }
 
         /// Gets the window's height in pixels
         pub fn pixel_h(&self) -> i32 {
-            assert!(!self.was_deleted());
-            unsafe { Fl_Gl_Window_pixel_h(self.inner) }
+            unsafe { Fl_Gl_Window_pixel_h(self.inner.widget() as _) }
         }
 
         /// Get the Mode of the GlutWindow
         pub fn mode(&self) -> Mode {
-            assert!(!self.was_deleted());
-            unsafe { mem::transmute(Fl_Gl_Window_mode(self.inner)) }
+            unsafe { mem::transmute(Fl_Gl_Window_mode(self.inner.widget() as _)) }
         }
 
         /// Set the Mode of the GlutWindow
         pub fn set_mode(&mut self, mode: Mode) {
-            assert!(!self.was_deleted());
             unsafe {
-                Fl_Gl_Window_set_mode(self.inner, mode.bits());
+                Fl_Gl_Window_set_mode(self.inner.widget() as _, mode.bits());
             }
         }
     }

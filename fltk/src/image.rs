@@ -5,10 +5,10 @@ use fltk_sys::image::*;
 use std::{ffi::CString, mem};
 
 #[cfg(feature = "single-threaded")]
-type RC<T> = std::rc::Rc<T>;
+type ImageRC<T> = std::rc::Rc<T>;
 
 #[cfg(not(feature = "single-threaded"))]
-type RC<T> = std::sync::Arc<T>;
+type ImageRC<T> = std::sync::Arc<T>;
 
 /// The scaling algorithm to use for raster images
 #[repr(i32)]
@@ -23,7 +23,7 @@ pub enum RgbScaling {
 /// Wrapper around `Fl_Image`, used to wrap other image types
 #[derive(Debug)]
 pub struct Image {
-    inner: RC<*mut Fl_Image>,
+    inner: ImageRC<*mut Fl_Image>,
 }
 
 crate::macros::image::impl_image_ext!(Image, Fl_Image);
@@ -43,7 +43,7 @@ impl Image {
 /// Creates a struct holding a shared image
 #[derive(Debug)]
 pub struct SharedImage {
-    inner: RC<*mut Fl_Shared_Image>,
+    inner: ImageRC<*mut Fl_Shared_Image>,
 }
 
 crate::macros::image::impl_image_ext!(SharedImage, Fl_Shared_Image);
@@ -72,7 +72,9 @@ impl SharedImage {
                 if Fl_Shared_Image_fail(x) < 0 {
                     return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                 }
-                Ok(SharedImage { inner: RC::from(x) })
+                Ok(SharedImage {
+                    inner: ImageRC::from(x),
+                })
             }
         }
     }
@@ -90,7 +92,9 @@ impl SharedImage {
                 if Fl_Shared_Image_fail(x) < 0 {
                     return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                 }
-                Ok(SharedImage { inner: RC::from(x) })
+                Ok(SharedImage {
+                    inner: ImageRC::from(x),
+                })
             }
         }
     }
@@ -99,7 +103,7 @@ impl SharedImage {
 /// Creates a struct holding a Jpeg image
 #[derive(Debug)]
 pub struct JpegImage {
-    inner: RC<*mut Fl_JPEG_Image>,
+    inner: ImageRC<*mut Fl_JPEG_Image>,
 }
 
 crate::macros::image::impl_image_ext!(JpegImage, Fl_JPEG_Image);
@@ -129,7 +133,7 @@ impl JpegImage {
                     return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                 }
                 Ok(JpegImage {
-                    inner: RC::from(image_ptr),
+                    inner: ImageRC::from(image_ptr),
                 })
             }
         }
@@ -150,7 +154,9 @@ impl JpegImage {
                     if Fl_JPEG_Image_fail(x) < 0 {
                         return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                     }
-                    Ok(JpegImage { inner: RC::from(x) })
+                    Ok(JpegImage {
+                        inner: ImageRC::from(x),
+                    })
                 }
             }
         }
@@ -160,7 +166,7 @@ impl JpegImage {
 /// Creates a struct holding a PNG image
 #[derive(Debug)]
 pub struct PngImage {
-    inner: RC<*mut Fl_PNG_Image>,
+    inner: ImageRC<*mut Fl_PNG_Image>,
 }
 
 crate::macros::image::impl_image_ext!(PngImage, Fl_PNG_Image);
@@ -190,7 +196,7 @@ impl PngImage {
                     return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                 }
                 Ok(PngImage {
-                    inner: RC::from(image_ptr),
+                    inner: ImageRC::from(image_ptr),
                 })
             }
         }
@@ -211,7 +217,9 @@ impl PngImage {
                     if Fl_PNG_Image_fail(x) < 0 {
                         return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                     }
-                    Ok(PngImage { inner: RC::from(x) })
+                    Ok(PngImage {
+                        inner: ImageRC::from(x),
+                    })
                 }
             }
         }
@@ -221,7 +229,7 @@ impl PngImage {
 /// Creates a struct holding an SVG image
 #[derive(Debug)]
 pub struct SvgImage {
-    inner: RC<*mut Fl_SVG_Image>,
+    inner: ImageRC<*mut Fl_SVG_Image>,
 }
 
 crate::macros::image::impl_image_ext!(SvgImage, Fl_SVG_Image);
@@ -251,7 +259,7 @@ impl SvgImage {
                     return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                 }
                 Ok(SvgImage {
-                    inner: RC::from(image_ptr),
+                    inner: ImageRC::from(image_ptr),
                 })
             }
         }
@@ -273,7 +281,9 @@ impl SvgImage {
                     if Fl_SVG_Image_fail(x) < 0 {
                         return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                     }
-                    Ok(SvgImage { inner: RC::from(x) })
+                    Ok(SvgImage {
+                        inner: ImageRC::from(x),
+                    })
                 }
             }
         }
@@ -289,7 +299,7 @@ impl SvgImage {
 /// Creates a struct holding a BMP image
 #[derive(Debug)]
 pub struct BmpImage {
-    inner: RC<*mut Fl_BMP_Image>,
+    inner: ImageRC<*mut Fl_BMP_Image>,
 }
 
 crate::macros::image::impl_image_ext!(BmpImage, Fl_BMP_Image);
@@ -319,7 +329,7 @@ impl BmpImage {
                     return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                 }
                 Ok(BmpImage {
-                    inner: RC::from(image_ptr),
+                    inner: ImageRC::from(image_ptr),
                 })
             }
         }
@@ -340,7 +350,9 @@ impl BmpImage {
                     if Fl_BMP_Image_fail(x) < 0 {
                         return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                     }
-                    Ok(BmpImage { inner: RC::from(x) })
+                    Ok(BmpImage {
+                        inner: ImageRC::from(x),
+                    })
                 }
             }
         }
@@ -350,7 +362,7 @@ impl BmpImage {
 /// Creates a struct holding a GIF image
 #[derive(Debug)]
 pub struct GifImage {
-    inner: RC<*mut Fl_GIF_Image>,
+    inner: ImageRC<*mut Fl_GIF_Image>,
 }
 
 crate::macros::image::impl_image_ext!(GifImage, Fl_GIF_Image);
@@ -380,7 +392,7 @@ impl GifImage {
                     return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                 }
                 Ok(GifImage {
-                    inner: RC::from(image_ptr),
+                    inner: ImageRC::from(image_ptr),
                 })
             }
         }
@@ -401,7 +413,9 @@ impl GifImage {
                     if Fl_GIF_Image_fail(x) < 0 {
                         return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                     }
-                    Ok(GifImage { inner: RC::from(x) })
+                    Ok(GifImage {
+                        inner: ImageRC::from(x),
+                    })
                 }
             }
         }
@@ -446,7 +460,7 @@ bitflags::bitflags! {
 /// Creates a struct holding an animated GIF image
 #[derive(Debug)]
 pub struct AnimGifImage {
-    inner: RC<*mut Fl_Anim_GIF_Image>,
+    inner: ImageRC<*mut Fl_Anim_GIF_Image>,
 }
 
 crate::macros::image::impl_image_ext!(AnimGifImage, Fl_Anim_GIF_Image);
@@ -485,7 +499,7 @@ impl AnimGifImage {
                     return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                 }
                 Ok(AnimGifImage {
-                    inner: RC::from(image_ptr),
+                    inner: ImageRC::from(image_ptr),
                 })
             }
         }
@@ -504,7 +518,7 @@ impl AnimGifImage {
                 Err(FltkError::Internal(FltkErrorKind::ResourceNotFound))
             } else {
                 let x = Fl_Anim_GIF_Image_from(
-                    std::ptr::null(),
+                    std::ptr::null() as _,
                     data.as_ptr(),
                     data.len() as _,
                     w.as_widget_ptr() as _,
@@ -516,7 +530,9 @@ impl AnimGifImage {
                     if Fl_Anim_GIF_Image_fail(x) < 0 {
                         return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                     }
-                    Ok(AnimGifImage { inner: RC::from(x) })
+                    Ok(AnimGifImage {
+                        inner: ImageRC::from(x),
+                    })
                 }
             }
         }
@@ -578,7 +594,7 @@ impl AnimGifImage {
 /// Creates a struct holding a XPM image
 #[derive(Debug)]
 pub struct XpmImage {
-    inner: RC<*mut Fl_XPM_Image>,
+    inner: ImageRC<*mut Fl_XPM_Image>,
 }
 
 crate::macros::image::impl_image_ext!(XpmImage, Fl_XPM_Image);
@@ -608,7 +624,7 @@ impl XpmImage {
                     return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                 }
                 Ok(XpmImage {
-                    inner: RC::from(image_ptr),
+                    inner: ImageRC::from(image_ptr),
                 })
             }
         }
@@ -618,7 +634,7 @@ impl XpmImage {
 /// Creates a struct holding a XBM image
 #[derive(Debug)]
 pub struct XbmImage {
-    inner: RC<*mut Fl_XBM_Image>,
+    inner: ImageRC<*mut Fl_XBM_Image>,
 }
 
 crate::macros::image::impl_image_ext!(XbmImage, Fl_XBM_Image);
@@ -648,7 +664,7 @@ impl XbmImage {
                     return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                 }
                 Ok(XbmImage {
-                    inner: RC::from(image_ptr),
+                    inner: ImageRC::from(image_ptr),
                 })
             }
         }
@@ -658,7 +674,7 @@ impl XbmImage {
 /// Creates a struct holding a PNM image
 #[derive(Debug)]
 pub struct PnmImage {
-    inner: RC<*mut Fl_PNM_Image>,
+    inner: ImageRC<*mut Fl_PNM_Image>,
 }
 
 crate::macros::image::impl_image_ext!(PnmImage, Fl_PNM_Image);
@@ -688,7 +704,7 @@ impl PnmImage {
                     return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                 }
                 Ok(PnmImage {
-                    inner: RC::from(image_ptr),
+                    inner: ImageRC::from(image_ptr),
                 })
             }
         }
@@ -698,7 +714,7 @@ impl PnmImage {
 /// Creates a struct holding a tiled image
 #[derive(Debug)]
 pub struct TiledImage {
-    inner: RC<*mut Fl_Tiled_Image>,
+    inner: ImageRC<*mut Fl_Tiled_Image>,
 }
 
 crate::macros::image::impl_image_ext!(TiledImage, Fl_Tiled_Image);
@@ -711,7 +727,7 @@ impl TiledImage {
             let ptr = Fl_Tiled_Image_new(img.as_image_ptr(), w, h);
             assert!(!ptr.is_null());
             TiledImage {
-                inner: RC::from(ptr),
+                inner: ImageRC::from(ptr),
             }
         }
     }
@@ -720,7 +736,7 @@ impl TiledImage {
 /// Creates a struct holding a pixmap image
 #[derive(Debug)]
 pub struct Pixmap {
-    inner: RC<*mut Fl_Pixmap>,
+    inner: ImageRC<*mut Fl_Pixmap>,
 }
 
 crate::macros::image::impl_image_ext!(Pixmap, Fl_Pixmap);
@@ -753,7 +769,7 @@ impl Pixmap {
                 }
                 std::fs::remove_file(temp_file)?;
                 Ok(Pixmap {
-                    inner: RC::from(image_ptr as *mut Fl_Pixmap),
+                    inner: ImageRC::from(image_ptr as *mut Fl_Pixmap),
                 })
             }
         }
@@ -763,7 +779,7 @@ impl Pixmap {
 /// Creates a struct holding a raw RGB image
 #[derive(Debug)]
 pub struct RgbImage {
-    pub(crate) inner: RC<*mut Fl_RGB_Image>,
+    pub(crate) inner: ImageRC<*mut Fl_RGB_Image>,
 }
 
 crate::macros::image::impl_image_ext!(RgbImage, Fl_RGB_Image);
@@ -784,7 +800,7 @@ impl RgbImage {
                 Err(FltkError::Internal(FltkErrorKind::ImageFormatError))
             } else {
                 Ok(RgbImage {
-                    inner: RC::from(img),
+                    inner: ImageRC::from(img),
                 })
             }
         }
@@ -810,7 +826,7 @@ impl RgbImage {
             Err(FltkError::Internal(FltkErrorKind::ImageFormatError))
         } else {
             Ok(RgbImage {
-                inner: RC::from(img),
+                inner: ImageRC::from(img),
             })
         }
     }
@@ -833,7 +849,7 @@ impl RgbImage {
             Err(FltkError::Internal(FltkErrorKind::ImageFormatError))
         } else {
             Ok(RgbImage {
-                inner: RC::from(img),
+                inner: ImageRC::from(img),
             })
         }
     }
@@ -857,7 +873,7 @@ impl RgbImage {
             Err(FltkError::Internal(FltkErrorKind::ImageFormatError))
         } else {
             Ok(RgbImage {
-                inner: RC::from(img),
+                inner: ImageRC::from(img),
             })
         }
     }
@@ -883,8 +899,8 @@ impl RgbImage {
         if depth == new_depth {
             Ok(self.copy())
         } else {
-            let w = self.w();
-            let h = self.h();
+            let w = self.data_w();
+            let h = self.data_h();
             let data = self.to_rgb_data();
             let mut temp = Vec::new();
             match depth {
@@ -1082,7 +1098,7 @@ impl RgbImage {
     }
 
     /// Blur the image
-    /// Adapted from https://www.cairographics.org/cookbook/blur.c/
+    /// Adapted from <https://www.cairographics.org/cookbook/blur.c/>
     pub fn blur(&self, radius: u32) -> Result<RgbImage, FltkError> {
         assert!(self.depth() == ColorDepth::Rgba8);
         let radius = radius as i32;
@@ -1241,7 +1257,7 @@ impl RgbImage {
 /// Creates a struct holding a Windows icon (.ico) image
 #[derive(Debug)]
 pub struct IcoImage {
-    inner: RC<*mut Fl_ICO_Image>,
+    inner: ImageRC<*mut Fl_ICO_Image>,
 }
 
 crate::macros::image::impl_image_ext!(IcoImage, Fl_ICO_Image);
@@ -1271,7 +1287,7 @@ impl IcoImage {
                     return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                 }
                 Ok(IcoImage {
-                    inner: RC::from(image_ptr),
+                    inner: ImageRC::from(image_ptr),
                 })
             }
         }
@@ -1292,7 +1308,9 @@ impl IcoImage {
                     if Fl_ICO_Image_fail(x) < 0 {
                         return Err(FltkError::Internal(FltkErrorKind::ImageFormatError));
                     }
-                    Ok(IcoImage { inner: RC::from(x) })
+                    Ok(IcoImage {
+                        inner: ImageRC::from(x),
+                    })
                 }
             }
         }
