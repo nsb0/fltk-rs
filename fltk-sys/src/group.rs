@@ -2859,7 +2859,7 @@ extern "C" {
     ) -> ::core::ffi::c_int;
 }
 extern "C" {
-    pub fn Fl_Color_Chooser_set_mode(self_: *mut Fl_Color_Chooser, newMode: ::std::os::raw::c_int);
+    pub fn Fl_Color_Chooser_set_mode(self_: *mut Fl_Color_Chooser, newMode: ::core::ffi::c_int);
 }
 extern "C" {
     pub fn Fl_Color_Chooser_begin(self_: *mut Fl_Color_Chooser);

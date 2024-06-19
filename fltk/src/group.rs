@@ -522,7 +522,7 @@ impl ColorChooser {
         assert!(!self.was_deleted());
         unsafe {
             Fl_Color_Chooser_set_mode(
-                self.inner, mode
+                self.inner.widget() as _, mode
             );
         }
     }
