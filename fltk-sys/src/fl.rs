@@ -140,6 +140,14 @@ extern "C" {
     );
 }
 extern "C" {
+    pub fn Fl_copy_image(
+        data: *const ::core::ffi::c_char,
+        w: ::core::ffi::c_int,
+        h: ::core::ffi::c_int,
+        destination: ::core::ffi::c_int,
+    );
+}
+extern "C" {
     pub fn Fl_paste_text(arg1: *mut Fl_Widget, src: ::core::ffi::c_int);
 }
 extern "C" {
